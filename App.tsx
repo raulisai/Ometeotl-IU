@@ -32,9 +32,11 @@ const App: React.FC = () => {
   const [projectName] = useState('Visionary Studio');
   const [codeExport, setCodeExport] = useState<string | null>(null);
   
-  const [leftSidebarVisible, setLeftSidebarVisible] = useState(true);
-  const [rightSidebarVisible, setRightSidebarVisible] = useState(false);
+  // Panel States
+  const [leftPanelMode, setLeftPanelMode] = useState<'studio' | 'inspector'>('studio');
+  const [leftVisible, setLeftVisible] = useState(true);
   const [inspectorMode, setInspectorMode] = useState<'props' | 'ai'>('props');
+  const [agentVisible, setAgentVisible] = useState(false);
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -56,13 +58,10 @@ const App: React.FC = () => {
     init();
   }, []);
 
+  // Auto-switch left panel mode when selection changes
   useEffect(() => {
     if (selectedId) {
-      setLeftSidebarVisible(false);
-      setRightSidebarVisible(true);
-    } else {
-      setLeftSidebarVisible(true);
-      setRightSidebarVisible(false);
+      setLeftPanelMode('inspector');
     }
   }, [selectedId]);
 
@@ -166,16 +165,113 @@ const App: React.FC = () => {
     <div className="flex h-screen bg-[#09090b] text-zinc-100 overflow-hidden relative selection:bg-indigo-600/50">
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
 
-      <LeftSidebar 
-        visible={leftSidebarVisible} 
-        setVisible={setLeftSidebarVisible} 
-        elements={elements} 
-        selectedId={selectedId} 
-        setSelectedId={setSelectedId} 
-        libraryComponents={LIBRARY_COMPONENTS} 
-        onInsert={insertFromLibrary} 
-      />
+      {/* --- LEFT INTEGRATED PANEL --- */}
+      <aside className={`fixed top-8 left-8 bottom-8 w-[420px] flex flex-col glass rounded-[48px] border border-white/10 shadow-2xl z-40 transition-all duration-500 ease-in-out transform ${leftVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
+        
+        {/* Toggle Mode Segmented Control */}
+        <div className="p-8 border-b border-white/5 flex items-center justify-center gap-4">
+          <button 
+            onClick={() => setLeftPanelMode('studio')} 
+            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${leftPanelMode === 'studio' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
+          >
+            <Icon name="grid" size={16} /> Studio
+          </button>
+          <button 
+            onClick={() => setLeftPanelMode('inspector')} 
+            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${leftPanelMode === 'inspector' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
+          >
+            <Icon name="settings" size={16} /> Inspector
+          </button>
+          <button onClick={() => setLeftVisible(false)} className="p-3 text-zinc-600 hover:text-white transition-colors"><Icon name="plus" size={14} className="rotate-45" /></button>
+        </div>
 
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {leftPanelMode === 'studio' ? (
+            <LeftSidebar 
+              visible={true} 
+              setVisible={() => {}} 
+              elements={elements} 
+              selectedId={selectedId} 
+              setSelectedId={setSelectedId} 
+              libraryComponents={LIBRARY_COMPONENTS} 
+              onInsert={insertFromLibrary} 
+              // Note: We wrap LeftSidebar internal layout to fit this container
+            />
+          ) : (
+            <div className="p-10 space-y-10">
+              {selectedId ? (
+                <>
+                  <div className="flex bg-white/5 p-2 rounded-[24px] mb-8">
+                    <button onClick={() => setInspectorMode('props')} className={`flex-1 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${inspectorMode === 'props' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500'}`}>Properties</button>
+                    <button onClick={() => setInspectorMode('ai')} className={`flex-1 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${inspectorMode === 'ai' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500'}`}>AI Lab</button>
+                  </div>
+                  {inspectorMode === 'props' ? (
+                    <PropertiesPanel 
+                      selectedId={selectedId} 
+                      selectedElement={selectedElement} 
+                      isEnvSelected={isEnvSelected} 
+                      isImageSelected={isImageSelected} 
+                      pageStyle={pageStyle} 
+                      updateStyle={updateStyle} 
+                      updateContent={updateContent} 
+                      onFileUpload={() => fileInputRef.current?.click()} 
+                    />
+                  ) : (
+                    <AIStudioPanel 
+                      isImageSelected={isImageSelected} 
+                      selectedId={selectedId} 
+                      isGenerating={isGenerating} 
+                      refinementPrompt={refinementPrompt} 
+                      setRefinementPrompt={setRefinementPrompt} 
+                      aiImagePrompt={aiImagePrompt} 
+                      setAiImagePrompt={setAiImagePrompt} 
+                      prompt={prompt} 
+                      setPrompt={setPrompt} 
+                      handleRefineImage={async (i) => {
+                        const instr = i || refinementPrompt;
+                        if (!instr.trim() || !selectedId || !selectedElement?.content) return;
+                        setIsGenerating(true);
+                        try {
+                          const url = await refineImageWithAI(selectedElement.content, instr);
+                          updateContent(selectedId, url);
+                          setRefinementPrompt('');
+                        } finally { setIsGenerating(false); }
+                      }} 
+                      handleCreateAIImage={async () => {
+                        if (!aiImagePrompt.trim() || !selectedId) return;
+                        setIsGenerating(true);
+                        try {
+                          const url = await generateImageWithAI(aiImagePrompt);
+                          updateContent(selectedId, url);
+                          setAiImagePrompt('');
+                        } finally { setIsGenerating(false); }
+                      }} 
+                      handleGenerate={handleGenerate} 
+                    />
+                  )}
+                </>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center opacity-30 py-20">
+                  <Icon name="mouse-pointer" size={48} className="mb-6" />
+                  <p className="text-xs font-black uppercase tracking-widest">Select an element to inspect</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Persistent Left Toggle Button */}
+      {!leftVisible && (
+        <button 
+          onClick={() => setLeftVisible(true)}
+          className="fixed top-1/2 left-8 -translate-y-1/2 w-14 h-14 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-indigo-600 hover:scale-110 transition-all"
+        >
+          <Icon name="chevron-right" />
+        </button>
+      )}
+
+      {/* --- MAIN DESIGN STAGE --- */}
       <main className="flex-1 flex flex-col bg-[#0c0c0e] relative">
         <Header 
           platform={platform} 
@@ -191,7 +287,7 @@ const App: React.FC = () => {
                 <div className="w-32 h-32 border-[10px] border-indigo-600/20 rounded-full animate-spin border-t-indigo-600"></div>
                 <Icon name="sparkles" size={40} className="absolute inset-0 m-auto text-indigo-500 animate-pulse" />
               </div>
-              <h2 className="text-3xl font-black italic uppercase text-white animate-pulse">Rendering...</h2>
+              <h2 className="text-3xl font-black italic uppercase text-white animate-pulse">Evolving...</h2>
             </div>
           )}
           <div 
@@ -203,89 +299,63 @@ const App: React.FC = () => {
             <UIRenderer elements={elements} selectedId={selectedId} onSelect={setSelectedId} onDragStart={handleDragStart} />
           </div>
         </div>
-
-        {!selectedId && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-full max-w-5xl px-12 z-50">
-            <form onSubmit={e => { e.preventDefault(); handleGenerate(); }} className="glass-dark p-4 rounded-full flex items-center gap-6 shadow-2xl border border-white/10 group focus-within:border-indigo-600/50 transition-all">
-              <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Icon name="sparkles" size={32} /></div>
-              <input placeholder="Describe your interface vision..." className="flex-1 bg-transparent py-5 text-lg focus:outline-none font-medium px-4 placeholder:text-zinc-700" value={prompt} onChange={e => setPrompt(e.target.value)} disabled={isGenerating} />
-              <button type="submit" className="bg-white text-black px-16 py-5 rounded-full text-[14px] font-black uppercase transition-all disabled:opacity-50">Generate</button>
-            </form>
-          </div>
-        )}
       </main>
 
-      <aside className={`fixed top-8 right-8 bottom-8 w-[420px] flex flex-col glass rounded-[48px] border border-white/10 shadow-2xl z-40 transition-all duration-700 ease-in-out transform ${rightSidebarVisible ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95 pointer-events-none'}`}>
-        <div className="p-8 border-b border-white/5 flex items-center justify-center gap-4">
-          <button 
-            onClick={() => setInspectorMode('props')} 
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${inspectorMode === 'props' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-500'}`}
-          >
-            <Icon name="settings" size={16} /> Properties
-          </button>
-          <button 
-            onClick={() => setInspectorMode('ai')} 
-            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${inspectorMode === 'ai' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-500'}`}
-          >
-            <Icon name="sparkles" size={16} /> AI Studio
-          </button>
+      {/* --- RIGHT MINIMALIST AGENT PANEL --- */}
+      <aside className={`fixed top-8 right-8 bottom-8 w-[400px] flex flex-col glass rounded-[48px] border border-white/10 shadow-2xl z-40 transition-all duration-500 ease-in-out transform ${agentVisible ? 'translate-x-0 opacity-100' : 'translate-x-[calc(100%+32px)] opacity-0 pointer-events-none'}`}>
+        <div className="p-10 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center border border-indigo-600/30">
+              <Icon name="sparkles" size={20} className="text-indigo-400" />
+            </div>
+            <span className="font-black text-xs uppercase tracking-[0.2em] italic">AI Agent</span>
+          </div>
+          <button onClick={() => setAgentVisible(false)} className="p-2 text-zinc-500 hover:text-white transition-colors"><Icon name="plus" size={16} className="rotate-45" /></button>
         </div>
+        
+        <div className="flex-1 p-8 flex flex-col gap-6 overflow-hidden">
+          <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-2">
+            <div className="bg-indigo-600/10 border border-indigo-600/20 p-6 rounded-[32px] text-xs leading-relaxed text-indigo-200">
+              Hi! I'm your GenUI Assistant. I can help you build entire sections or refine specific details. Describe what you need below.
+            </div>
+            {/* Could add a history of prompts here */}
+          </div>
 
-        <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
-          {inspectorMode === 'props' ? (
-            <PropertiesPanel 
-              selectedId={selectedId} 
-              selectedElement={selectedElement} 
-              isEnvSelected={isEnvSelected} 
-              isImageSelected={isImageSelected} 
-              pageStyle={pageStyle} 
-              updateStyle={updateStyle} 
-              updateContent={updateContent} 
-              onFileUpload={() => fileInputRef.current?.click()} 
+          <div className="relative group">
+            <textarea 
+              placeholder="Command the Studio..." 
+              className="w-full bg-black/50 border border-white/10 rounded-[40px] p-8 text-xs focus:border-indigo-600 outline-none h-40 resize-none font-medium transition-all shadow-inner"
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+              onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGenerate(); } }}
             />
-          ) : (
-            <AIStudioPanel 
-              isImageSelected={isImageSelected} 
-              selectedId={selectedId} 
-              isGenerating={isGenerating} 
-              refinementPrompt={refinementPrompt} 
-              setRefinementPrompt={setRefinementPrompt} 
-              aiImagePrompt={aiImagePrompt} 
-              setAiImagePrompt={setAiImagePrompt} 
-              prompt={prompt} 
-              setPrompt={setPrompt} 
-              handleRefineImage={async (i) => {
-                const instr = i || refinementPrompt;
-                if (!instr.trim() || !selectedId || !selectedElement?.content) return;
-                setIsGenerating(true);
-                try {
-                  const url = await refineImageWithAI(selectedElement.content, instr);
-                  updateContent(selectedId, url);
-                  setRefinementPrompt('');
-                } finally { setIsGenerating(false); }
-              }} 
-              handleCreateAIImage={async () => {
-                if (!aiImagePrompt.trim() || !selectedId) return;
-                setIsGenerating(true);
-                try {
-                  const url = await generateImageWithAI(aiImagePrompt);
-                  updateContent(selectedId, url);
-                  setAiImagePrompt('');
-                } finally { setIsGenerating(false); }
-              }} 
-              handleGenerate={handleGenerate} 
-            />
-          )}
+            <button 
+              onClick={() => handleGenerate()}
+              disabled={isGenerating || !prompt.trim()}
+              className="absolute bottom-6 right-6 p-5 bg-indigo-600 rounded-[28px] shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <Icon name="play" size={24} />
+            </button>
+          </div>
+          <p className="text-[10px] text-zinc-600 text-center uppercase tracking-widest font-bold">Press Enter to Dispatch</p>
         </div>
       </aside>
+
+      {/* Persistent Right Toggle Button */}
+      <button 
+        onClick={() => setAgentVisible(!agentVisible)}
+        className={`fixed top-1/2 right-8 -translate-y-1/2 w-14 h-14 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-indigo-600 hover:scale-110 transition-all ${agentVisible ? 'translate-x-full' : ''}`}
+      >
+        <Icon name="sparkles" size={24} className={agentVisible ? 'text-white' : 'text-indigo-400'} />
+      </button>
 
       {codeExport && <CodePortal code={codeExport} onClose={() => setCodeExport(null)} />}
 
       <style>{`
         .bg-dot-pattern { background-image: radial-gradient(rgba(255,255,255,0.04) 1.5px, transparent 1.5px); background-size: 60px 60px; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 20px; }
-        .glass { background: rgba(18, 18, 22, 0.75); backdrop-filter: blur(60px) saturate(200%); }
+        .glass { background: rgba(12, 12, 14, 0.85); backdrop-filter: blur(60px) saturate(220%); }
         .glass-dark { background: rgba(10, 10, 12, 0.98); backdrop-filter: blur(100px) saturate(180%); }
       `}</style>
     </div>

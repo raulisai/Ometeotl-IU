@@ -14,26 +14,14 @@ interface LeftSidebarProps {
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
-  visible, setVisible, elements, selectedId, setSelectedId, libraryComponents, onInsert 
+  elements, selectedId, setSelectedId, libraryComponents, onInsert 
 }) => {
   return (
-    <aside className={`fixed top-8 left-8 bottom-8 w-80 flex flex-col glass rounded-[48px] border border-white/10 shadow-2xl z-40 transition-all duration-700 ease-in-out transform ${visible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-full opacity-0 scale-95 pointer-events-none'}`}>
-      <div className="p-10 border-b border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
-            <Icon name="sparkles" size={24} className="text-white" />
-          </div>
-          <span className="font-black text-sm uppercase tracking-[0.2em] italic">Studio</span>
-        </div>
-        <button onClick={() => setVisible(false)} className="text-zinc-500 hover:text-white transition-colors p-2">
-          <Icon name="plus" size={16} className="rotate-45" />
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 p-8 space-y-12">
         <section>
           <h3 className="text-[11px] font-black uppercase text-zinc-600 tracking-[0.3em] mb-8 flex justify-between items-center px-2">
-            Blueprint <Icon name="layers" size={12} className="opacity-30" />
+            Layers <Icon name="layers" size={12} className="opacity-30" />
           </h3>
           <div className="space-y-3">
             <div 
@@ -74,6 +62,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         </section>
       </div>
-    </aside>
+    </div>
   );
 };
