@@ -14,18 +14,17 @@ interface PropertiesPanelProps {
   onFileUpload: () => void;
 }
 
-// Move these outside to prevent focus loss during re-renders
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <section className="space-y-4 pb-6 border-b border-white/5 last:border-0">
+  <section className="space-y-4 pb-8 border-b border-white/5 last:border-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
     <label className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em] block px-1">{title}</label>
     <div className="space-y-4">{children}</div>
   </section>
 );
 
 const ControlGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex items-center justify-between gap-4">
-    <span className="text-[10px] text-zinc-500 font-medium whitespace-nowrap">{label}</span>
-    <div className="flex-1 flex justify-end gap-2">{children}</div>
+  <div className="flex flex-col gap-2">
+    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">{label}</span>
+    <div className="flex flex-wrap gap-2">{children}</div>
   </div>
 );
 
@@ -34,286 +33,264 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 }) => {
   const currentStyle = isEnvSelected ? pageStyle : selectedElement?.style || {};
   
+  const presets = [
+    { name: 'Desktop HD', w: '1440px', h: '900px' },
+    { name: 'Standard', w: '1280px', h: '800px' },
+    { name: 'Tablet', w: '768px', h: '1024px' },
+    { name: 'Mobile', w: '375px', h: '812px' }
+  ];
+
+  const patterns = [
+    { name: 'None', css: 'none', size: 'auto' },
+    { name: 'Dots', css: 'radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)', size: '20px 20px' },
+    { name: 'Grid', css: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', size: '20px 20px' },
+    { name: 'Pluses', css: 'linear-gradient(rgba(255,255,255,0.08) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.08) 2px, transparent 2px)', size: '40px 40px' },
+    { name: 'Waves', css: 'radial-gradient(circle at 100% 50%, transparent 20%, rgba(255,255,255,0.03) 21%, rgba(255,255,255,0.03) 34%, transparent 35%, transparent), radial-gradient(circle at 0% 50%, transparent 20%, rgba(255,255,255,0.03) 21%, rgba(255,255,255,0.03) 34%, transparent 35%, transparent)', size: '40px 40px' },
+    { name: 'Honeycomb', css: 'linear-gradient(30deg, rgba(255,255,255,0.02) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.02) 87.5%, rgba(255,255,255,0.02)), linear-gradient(150deg, rgba(255,255,255,0.02) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.02) 87.5%, rgba(255,255,255,0.02)), linear-gradient(60deg, rgba(255,255,255,0.04) 25%, transparent 25.5%, transparent 75%, rgba(255,255,255,0.04) 75.5%, rgba(255,255,255,0.04))', size: '40px 70px' }
+  ];
+
+  const gradients = [
+    { name: 'Fintech', grad: 'linear-gradient(135deg, #4f46e5 0%, #10b981 100%)' },
+    { name: 'Sunset', grad: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' },
+    { name: 'Creative', grad: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)' },
+    { name: 'Deep Space', grad: 'radial-gradient(circle at 20% 30%, #2e1065 0%, #000000 70%)' },
+    { name: 'Oceanic', grad: 'linear-gradient(135deg, #0ea5e9 0%, #2dd4bf 100%)' },
+    { name: 'Mesh Aurora', grad: 'radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%), radial-gradient(at 0% 100%, hsla(190,49%,30%,1) 0, transparent 50%)' },
+    { name: 'Royal', grad: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)' },
+    { name: 'Midnight', grad: 'linear-gradient(180deg, #111827 0%, #000000 100%)' },
+    { name: 'None', grad: 'none' }
+  ];
+
+  const animations = [
+    { name: 'None', val: 'none' },
+    { name: 'Pulse', val: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
+    { name: 'Bounce', val: 'bounce 1s infinite' },
+    { name: 'Spin', val: 'spin 1s linear infinite' },
+    { name: 'Float', val: 'float 3s ease-in-out infinite' },
+    { name: 'Fade In', val: 'fadeIn 0.5s ease-out forwards' }
+  ];
+
+  const behaviors = [
+    { label: 'Cover', size: 'cover', repeat: 'no-repeat', icon: 'maximize' },
+    { label: 'Tile', size: 'auto', repeat: 'repeat', icon: 'grid' },
+    { label: 'Contain', size: 'contain', repeat: 'no-repeat', icon: 'minimize' },
+    { label: 'Fill', size: '100% 100%', repeat: 'no-repeat', icon: 'square' },
+  ];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 pb-20">
+    <div className="space-y-8 animate-in fade-in duration-300 pb-24">
       
-      {/* --- LAYOUT SECTION --- */}
-      <Section title="Dimensions & Layout">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <span className="text-[9px] text-zinc-500 uppercase font-bold">Width</span>
-            <input 
-              type="text" 
-              value={currentStyle.width || ''} 
-              onChange={e => updateStyle(selectedId!, { width: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 outline-none"
-              placeholder="auto"
-            />
-          </div>
-          <div className="space-y-2">
-            <span className="text-[9px] text-zinc-500 uppercase font-bold">Height</span>
-            <input 
-              type="text" 
-              value={currentStyle.height || ''} 
-              onChange={e => updateStyle(selectedId!, { height: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 outline-none"
-              placeholder="auto"
-            />
-          </div>
-        </div>
-        {!isEnvSelected && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <span className="text-[9px] text-zinc-500 uppercase font-bold">Padding</span>
-              <input 
-                type="text" 
-                value={currentStyle.padding || ''} 
-                onChange={e => updateStyle(selectedId!, { padding: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 outline-none"
-                placeholder="0px"
-              />
+      {/* -------------------- ENVIRONMENT MODE -------------------- */}
+      {isEnvSelected && (
+        <>
+          <Section title="Canvas Dimensions">
+            <div className="grid grid-cols-2 gap-3">
+              {presets.map(p => (
+                <button 
+                  key={p.name} 
+                  onClick={() => updateStyle('page-background', { width: p.w, height: p.h })}
+                  className={`p-4 border rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${currentStyle.width === p.w ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/10'}`}
+                >
+                  {p.name}
+                </button>
+              ))}
             </div>
-            <div className="space-y-2">
-              <span className="text-[9px] text-zinc-500 uppercase font-bold">Opacity</span>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="range" min="0" max="1" step="0.01" 
-                  value={currentStyle.opacity ?? 1} 
-                  onChange={e => updateStyle(selectedId!, { opacity: parseFloat(e.target.value) })} 
-                  className="flex-1 h-1 bg-white/10 rounded-full appearance-none accent-indigo-500" 
-                />
-                <span className="text-[10px] font-mono text-indigo-400 w-8">{Math.round((currentStyle.opacity ?? 1) * 100)}%</span>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <input type="text" value={currentStyle.width || ''} onChange={e => updateStyle('page-background', { width: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="Width (e.g. 100%)" />
+              <input type="text" value={currentStyle.height || ''} onChange={e => updateStyle('page-background', { height: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="Height (e.g. 100%)" />
+            </div>
+          </Section>
+
+          <Section title="Environment Atmosphere">
+            <ControlGroup label="Designer Gradients & Meshes">
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {gradients.map(g => (
+                  <button 
+                    key={g.name} 
+                    onClick={() => updateStyle('page-background', { backgroundGradient: g.grad, backgroundImage: 'none', backgroundColor: 'transparent' })}
+                    className={`group relative w-full py-5 rounded-xl border transition-all overflow-hidden ${currentStyle.backgroundGradient === g.grad ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-xl shadow-indigo-600/10' : 'border-white/5 hover:border-white/20'}`}
+                  >
+                    <div className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-all duration-500" style={{ background: g.grad === 'none' ? 'rgba(255,255,255,0.05)' : g.grad }} />
+                    <span className={`relative z-10 text-[9px] font-black uppercase tracking-widest ${currentStyle.backgroundGradient === g.grad ? 'text-white' : 'text-zinc-500 group-hover:text-white'}`}>{g.name}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-          </div>
-        )}
-      </Section>
+            </ControlGroup>
 
-      {/* --- BACKGROUND SECTION --- */}
-      <Section title="Background & Fill">
-        <div className="grid grid-cols-5 gap-2">
-          {['transparent', '#ffffff', '#000000', '#4f46e5', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'].map(c => (
-            <button 
-              key={c} 
-              onClick={() => updateStyle(selectedId!, { backgroundColor: c, backgroundGradient: '' })} 
-              className={`w-full aspect-square rounded-lg border-2 transition-all hover:scale-110 ${currentStyle.backgroundColor === c ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-lg shadow-indigo-500/30' : 'border-white/5'}`} 
-              style={{ backgroundColor: c === 'transparent' ? undefined : c }}
-            >
-              {c === 'transparent' && <div className="w-full h-full relative overflow-hidden rounded-md"><div className="absolute top-0 left-0 w-full h-px bg-red-500 rotate-45 origin-top-left scale-x-150" /></div>}
-            </button>
-          ))}
-        </div>
-        <div className="space-y-2">
-          <span className="text-[9px] text-zinc-500 uppercase font-bold">Gradient (CSS)</span>
-          <input 
-            type="text" 
-            placeholder="linear-gradient(to right, #4f46e5, #ec4899)"
-            value={currentStyle.backgroundGradient || ''}
-            onChange={e => updateStyle(selectedId!, { backgroundGradient: e.target.value })}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-mono focus:border-indigo-500 outline-none"
-          />
-        </div>
-      </Section>
+            <ControlGroup label="Visual Texture Patterns">
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {patterns.map(p => (
+                  <button 
+                    key={p.name} 
+                    onClick={() => updateStyle('page-background', { backgroundImage: p.css, backgroundSize: p.size, backgroundRepeat: 'repeat', backgroundGradient: 'none' } as any)}
+                    className={`flex items-center gap-3 p-3 border rounded-xl transition-all group ${currentStyle.backgroundImage === p.css ? 'bg-indigo-600 border-indigo-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                  >
+                    <div className="w-8 h-8 rounded-lg border border-white/10 flex-shrink-0" style={{ backgroundImage: p.css, backgroundSize: p.size === 'auto' ? 'cover' : '10px 10px' }} />
+                    <span className={`text-[10px] font-bold ${currentStyle.backgroundImage === p.css ? 'text-white' : 'text-zinc-500 group-hover:text-white'}`}>{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            </ControlGroup>
+          </Section>
 
-      {/* --- TYPOGRAPHY SECTION --- */}
-      {!isImageSelected && !isEnvSelected && (
-        <Section title="Typography & Content">
-          <div className="space-y-4">
-             <textarea 
-              value={selectedElement?.content || ''} 
-              onChange={e => updateContent(selectedId!, e.target.value)} 
-              className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-xs focus:border-indigo-500 outline-none h-40 font-mono transition-all shadow-inner leading-relaxed" 
-              placeholder="Text or HTML content..."
-            />
+          <Section title="Asset Dynamics">
+            <ControlGroup label="Behavior Options">
+               <div className="grid grid-cols-2 gap-2 w-full">
+                {behaviors.map(b => (
+                  <button 
+                    key={b.label}
+                    onClick={() => updateStyle('page-background', { backgroundSize: b.size, backgroundRepeat: b.repeat })}
+                    className={`flex items-center gap-3 p-3 border rounded-xl transition-all group ${currentStyle.backgroundSize === b.size && currentStyle.backgroundRepeat === b.repeat ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/10 hover:text-white'}`}
+                  >
+                    <Icon name={b.icon as any} size={14} />
+                    <span className="text-[9px] font-black uppercase tracking-tighter">{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            </ControlGroup>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <span className="text-[9px] text-zinc-500 uppercase font-bold">Size</span>
-                <input 
-                  type="text" value={currentStyle.fontSize || ''} 
-                  onChange={e => updateStyle(selectedId!, { fontSize: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none"
-                  placeholder="16px"
-                />
-              </div>
-              <div className="space-y-2">
-                <span className="text-[9px] text-zinc-500 uppercase font-bold">Color</span>
-                <input 
-                  type="color" value={currentStyle.color || '#ffffff'} 
-                  onChange={e => updateStyle(selectedId!, { color: e.target.value })}
-                  className="w-full h-8 bg-white/5 border border-white/10 rounded-xl px-1 py-1 outline-none cursor-pointer"
-                />
-              </div>
-            </div>
-
-            <ControlGroup label="Alignment">
-              <div className="flex bg-white/5 rounded-xl p-1 w-full">
-                {(['left', 'center', 'right', 'justify'] as const).map(align => (
-                  <button key={align} onClick={() => updateStyle(selectedId!, { textAlign: align })} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all ${currentStyle.textAlign === align ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>
-                    <Icon name={`align-${align}` as any} size={14} />
-                  </button>
-                ))}
-              </div>
-            </ControlGroup>
-
-            <ControlGroup label="Weight">
-              <div className="flex bg-white/5 rounded-xl p-1 w-full">
-                {(['400', '600', '700', '900'] as const).map(w => (
-                  <button key={w} onClick={() => updateStyle(selectedId!, { fontWeight: w })} className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${currentStyle.fontWeight === w ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>
-                    {w === '400' ? 'R' : w === '600' ? 'M' : w === '700' ? 'B' : 'X'}
-                  </button>
-                ))}
-              </div>
-            </ControlGroup>
-          </div>
-        </Section>
+            <button 
+              onClick={onFileUpload} 
+              className="w-full py-6 bg-indigo-600/10 border border-indigo-600/30 rounded-[32px] text-indigo-400 font-black uppercase tracking-widest text-[11px] hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95"
+            >
+              <Icon name="image" size={20} /> Upload Scene Asset
+            </button>
+          </Section>
+        </>
       )}
 
-      {/* --- BORDERS & RADIUS --- */}
+      {/* -------------------- COMPONENT MODE -------------------- */}
       {!isEnvSelected && (
-        <Section title="Border & Corners">
-          <div className="space-y-4">
+        <>
+          <Section title="Component Layout">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <span className="text-[9px] text-zinc-500 uppercase font-bold">Radius</span>
-                <div className="grid grid-cols-3 gap-1">
-                  {['0px', '16px', '999px'].map(r => (
-                    <button key={r} onClick={() => updateStyle(selectedId!, { borderRadius: r })} className={`py-2 rounded-lg text-[10px] font-bold transition-all ${currentStyle.borderRadius === r ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-500'}`}>
-                      {r === '0px' ? 'None' : r === '16px' ? 'Soft' : 'Full'}
-                    </button>
-                  ))}
+                <span className="text-[9px] text-zinc-500 uppercase font-bold">Width</span>
+                <input type="text" value={currentStyle.width || ''} onChange={e => updateStyle(selectedId!, { width: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="auto" />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[9px] text-zinc-500 uppercase font-bold">Padding</span>
+                <input type="text" value={currentStyle.padding || ''} onChange={e => updateStyle(selectedId!, { padding: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="0px" />
+              </div>
+            </div>
+
+            {isImageSelected && (
+               <ControlGroup label="Image Behavior">
+                  <div className="grid grid-cols-2 gap-2 w-full">
+                    {behaviors.map(b => (
+                      <button 
+                        key={b.label}
+                        onClick={() => updateStyle(selectedId!, { backgroundSize: b.size, backgroundRepeat: b.repeat, objectFit: b.size as any })}
+                        className={`flex items-center gap-3 p-3 border rounded-xl transition-all ${currentStyle.backgroundSize === b.size ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white'}`}
+                      >
+                        <Icon name={b.icon as any} size={14} />
+                        <span className="text-[9px] font-black uppercase tracking-tight">{b.label}</span>
+                      </button>
+                    ))}
+                  </div>
+               </ControlGroup>
+            )}
+          </Section>
+
+          <Section title="Visual Dynamics & Motion">
+            <ControlGroup label="Animation Effects">
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {animations.map(anim => (
+                  <button 
+                    key={anim.name} 
+                    onClick={() => updateStyle(selectedId!, { animation: anim.val })}
+                    className={`px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${currentStyle.animation === anim.val ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/30' : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/10 hover:text-white'}`}
+                  >
+                    {anim.name}
+                  </button>
+                ))}
+              </div>
+            </ControlGroup>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <span className="text-[9px] text-zinc-500 uppercase font-bold">Opacity</span>
+                <div className="flex items-center gap-2">
+                  <input type="range" min="0" max="1" step="0.01" value={currentStyle.opacity ?? 1} onChange={e => updateStyle(selectedId!, { opacity: parseFloat(e.target.value) })} className="flex-1 h-1 bg-white/10 rounded-full appearance-none accent-indigo-500" />
+                  <span className="text-[10px] font-mono text-indigo-400 w-8">{Math.round((currentStyle.opacity ?? 1) * 100)}%</span>
                 </div>
               </div>
               <div className="space-y-2">
-                <span className="text-[9px] text-zinc-500 uppercase font-bold">Border Width</span>
-                <input 
-                  type="text" value={currentStyle.borderWidth || ''} 
-                  onChange={e => updateStyle(selectedId!, { borderWidth: e.target.value, borderStyle: 'solid' })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none"
-                  placeholder="0px"
-                />
+                <span className="text-[9px] text-zinc-500 uppercase font-bold">Radius</span>
+                <input type="text" value={currentStyle.borderRadius || ''} onChange={e => updateStyle(selectedId!, { borderRadius: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="16px" />
               </div>
             </div>
-            <div className="flex items-center gap-4">
-               <input 
-                type="color" value={currentStyle.borderColor || '#ffffff'} 
-                onChange={e => updateStyle(selectedId!, { borderColor: e.target.value })}
-                className="w-12 h-10 bg-white/5 border border-white/10 rounded-xl px-1 py-1 outline-none cursor-pointer"
+          </Section>
+
+          {!isImageSelected && (
+            <Section title="Content & Typography">
+               <textarea 
+                value={selectedElement?.content || ''} 
+                onChange={e => updateContent(selectedId!, e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-xs focus:border-indigo-600 outline-none h-40 font-mono transition-all shadow-inner leading-relaxed" 
+                placeholder="Content (Text or HTML)..."
               />
-              <div className="flex-1 flex bg-white/5 rounded-xl p-1">
-                {(['solid', 'dashed', 'dotted', 'none'] as const).map(s => (
-                  <button key={s} onClick={() => updateStyle(selectedId!, { borderStyle: s })} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${currentStyle.borderStyle === s ? 'bg-indigo-600 text-white' : 'text-zinc-500 hover:text-white'}`}>
-                    {s}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                   <span className="text-[9px] text-zinc-500 uppercase font-bold">Size</span>
+                   <input type="text" value={currentStyle.fontSize || ''} onChange={e => updateStyle(selectedId!, { fontSize: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="e.g. 1rem" />
+                </div>
+                <div className="space-y-2">
+                   <span className="text-[9px] text-zinc-500 uppercase font-bold">Color</span>
+                   <input type="color" value={currentStyle.color || '#ffffff'} onChange={e => updateStyle(selectedId!, { color: e.target.value })} className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-1 py-1 cursor-pointer outline-none" />
+                </div>
               </div>
-            </div>
-          </div>
-        </Section>
+              
+              <ControlGroup label="Align">
+                <div className="flex bg-white/5 rounded-xl p-1 w-full border border-white/5">
+                  {(['left', 'center', 'right', 'justify'] as const).map(align => (
+                    <button key={align} onClick={() => updateStyle(selectedId!, { textAlign: align })} className={`flex-1 py-2 rounded-lg flex items-center justify-center transition-all ${currentStyle.textAlign === align ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
+                      <Icon name={`align-${align}` as any} size={14} />
+                    </button>
+                  ))}
+                </div>
+              </ControlGroup>
+            </Section>
+          )}
+
+          <Section title="Appearance Detail">
+             <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                   <span className="text-[9px] text-zinc-500 uppercase font-bold">Stroke</span>
+                   <input type="text" value={currentStyle.borderWidth || ''} onChange={e => updateStyle(selectedId!, { borderWidth: e.target.value, borderStyle: 'solid' })} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="0px" />
+                </div>
+                <div className="space-y-2">
+                   <span className="text-[9px] text-zinc-500 uppercase font-bold">Weight</span>
+                   <select value={currentStyle.fontWeight || 'normal'} onChange={e => updateStyle(selectedId!, { fontWeight: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none text-zinc-300">
+                      {['300', '400', '500', '600', '700', '900'].map(w => <option key={w} value={w} className="bg-zinc-900">{w}</option>)}
+                   </select>
+                </div>
+             </div>
+          </Section>
+        </>
       )}
 
-      {/* --- EFFECTS & SHADOWS --- */}
-      {!isEnvSelected && (
-        <Section title="Shadows & Effects">
-          <div className="space-y-4">
-            <ControlGroup label="Elevation">
-              <div className="grid grid-cols-4 gap-2 w-full">
-                {[
-                  { name: 'None', val: 'none' },
-                  { name: 'Soft', val: '0 10px 30px rgba(0,0,0,0.1)' },
-                  { name: 'Hard', val: '0 20px 50px rgba(0,0,0,0.3)' },
-                  { name: 'Neon', val: '0 0 30px rgba(79,70,229,0.5)' }
-                ].map(sh => (
-                  <button key={sh.name} onClick={() => updateStyle(selectedId!, { boxShadow: sh.val })} className={`py-2 rounded-lg text-[9px] font-bold transition-all ${currentStyle.boxShadow === sh.val ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-500'}`}>
-                    {sh.name}
-                  </button>
-                ))}
-              </div>
-            </ControlGroup>
-            <div className="space-y-2">
-              <span className="text-[9px] text-zinc-500 uppercase font-bold">Blur / Glass (Backdrop)</span>
-              <input 
-                type="text" placeholder="blur(10px)"
-                value={currentStyle.backdropFilter || ''}
-                onChange={e => updateStyle(selectedId!, { backdropFilter: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none font-mono"
-              />
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {/* --- ANIMATIONS SECTION --- */}
-      {!isEnvSelected && (
-        <Section title="Animations">
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'None', val: 'none' },
-              { label: 'Pulse', val: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
-              { label: 'Bounce', val: 'bounce 1s infinite' },
-              { label: 'Spin', val: 'spin 3s linear infinite' },
-              { label: 'Ping', val: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' },
-              { label: 'Float', val: 'float 3s ease-in-out infinite' }
-            ].map(ani => (
-              <button 
-                key={ani.label} 
-                onClick={() => updateStyle(selectedId!, { animation: ani.val })} 
-                className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentStyle.animation === ani.val ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white/5 text-zinc-500 hover:bg-white/10'}`}
-              >
-                {ani.label}
-              </button>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* --- IMAGE SOURCE SECTION --- */}
-      {isImageSelected && (
-        <Section title="Image Studio">
-          <div className="flex gap-4">
-            <textarea 
-              value={selectedElement?.content} 
-              onChange={e => updateContent(selectedId!, e.target.value)} 
-              placeholder="Source URL..." 
-              className="flex-1 bg-black/50 border border-white/10 rounded-[28px] p-5 text-[10px] focus:border-indigo-600 outline-none h-20 resize-none font-medium transition-all shadow-inner" 
-            />
-            <button 
-              onClick={onFileUpload} 
-              className="w-20 h-20 bg-indigo-600/10 border border-indigo-600/30 text-indigo-400 rounded-[28px] flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-xl active:scale-95"
-            >
-              <Icon name="plus" size={32} />
-            </button>
-          </div>
-          <div className="space-y-4 pt-4">
-            <span className="text-[11px] font-black text-zinc-600 uppercase tracking-widest block px-2">Object Fit</span>
-            <div className="grid grid-cols-4 gap-2">
-              {(['cover', 'contain', 'fill', 'none'] as const).map(fit => (
-                <button key={fit} onClick={() => updateStyle(selectedId!, { objectFit: fit })} className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${currentStyle.objectFit === fit ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-600'}`}>{fit}</button>
-              ))}
-            </div>
-          </div>
-        </Section>
-      )}
-
+      {/* Animation Keyframes */}
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+          50% { transform: translateY(-12px); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: .7; transform: scale(0.98); }
         }
         @keyframes bounce {
-          0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+          0%, 100% { transform: translateY(-10%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
           50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
-        }
-        @keyframes ping {
-          75%, 100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
     </div>

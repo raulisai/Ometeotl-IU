@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Platform, UIElement, LibraryComponent, UIStyle, AIAction, TaskStatus } from './types';
 import { Icon } from './components/Icon';
 import { UIRenderer } from './components/UIRenderer';
@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [platform, setPlatform] = useState<Platform>(Platform.WEB);
   const [elements, setElements] = useState<UIElement[]>([]);
-  const [pageStyle, setPageStyle] = useState<UIStyle>({ backgroundColor: '#09090b' });
+  const [pageStyle, setPageStyle] = useState<UIStyle>({ backgroundColor: '#09090b', width: '100%', height: '100%' });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [agentStatus, setAgentStatus] = useState<TaskStatus>('idle');
   const [agentHistory, setAgentHistory] = useState<AIAction[]>([]);
@@ -32,7 +32,6 @@ const App: React.FC = () => {
   const [projectName] = useState('Visionary Studio');
   const [codeExport, setCodeExport] = useState<string | null>(null);
   
-  // Custom Components Persistence
   const [customComponents, setCustomComponents] = useState<LibraryComponent[]>(() => {
     const saved = localStorage.getItem('genui_custom_components');
     return saved ? JSON.parse(saved) : [];
@@ -42,7 +41,6 @@ const App: React.FC = () => {
     localStorage.setItem('genui_custom_components', JSON.stringify(customComponents));
   }, [customComponents]);
 
-  // Panel States
   const [leftPanelMode, setLeftPanelMode] = useState<'studio' | 'inspector'>('studio');
   const [leftVisible, setLeftVisible] = useState(true);
   const [inspectorMode, setInspectorMode] = useState<'props' | 'ai'>('props');
@@ -86,6 +84,14 @@ const App: React.FC = () => {
     }
   };
 
+  const deleteElement = (id: string) => {
+    if (id === 'page-background') return;
+    const newElements = elements.filter(el => el.id !== id);
+    setElements(newElements);
+    if (selectedId === id) setSelectedId(null);
+    saveToHistory({ elements: newElements, platform, projectName, pageStyle });
+  };
+
   const updateContent = (id: string, content: string) => {
     const newElements = elements.map(el => el.id === id ? { ...el, content } : el);
     setElements(newElements);
@@ -96,7 +102,14 @@ const App: React.FC = () => {
     const file = e.target.files?.[0];
     if (file && selectedId) {
       const reader = new FileReader();
-      reader.onloadend = () => updateContent(selectedId, reader.result as string);
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        if (isEnvSelected) {
+          updateStyle('page-background', { backgroundImage: `url(${base64})`, backgroundGradient: 'none', backgroundColor: 'transparent' });
+        } else {
+          updateContent(selectedId, base64);
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -119,7 +132,6 @@ const App: React.FC = () => {
     const targetId = elementId || selectedId;
     const isScoped = targetId && targetId !== 'page-background';
     
-    // Open the agent panel to show progress
     setAgentVisible(true);
     addHistory('user', finalPrompt, isScoped ? elements.find(e => e.id === targetId)?.name : 'Full Interface');
 
@@ -147,7 +159,6 @@ const App: React.FC = () => {
       }
     }
 
-    // Default: Full UI generation
     setAgentStatus('analyzing');
     try {
       setTimeout(() => setAgentStatus('designing'), 1200);
@@ -259,11 +270,27 @@ const App: React.FC = () => {
     );
   }
 
+  // Derive final CSS style for the canvas background
+  const finalCanvasStyle = useMemo(() => {
+    const style: any = { ...pageStyle };
+    // CRITICAL FIX: Prioritize backgroundGradient for Designer Gradients
+    if (style.backgroundGradient && style.backgroundGradient !== 'none') {
+      style.backgroundImage = style.backgroundGradient;
+    }
+    return {
+      ...style,
+      width: platform === Platform.MOBILE ? '375px' : pageStyle.width || '100%',
+      height: platform === Platform.MOBILE ? '750px' : pageStyle.height || '100%',
+      maxWidth: platform === Platform.WEB ? '1152px' : 'none',
+      maxHeight: platform === Platform.WEB ? 'none' : 'none',
+      transition: 'all 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
+    };
+  }, [pageStyle, platform]);
+
   return (
     <div className="flex h-screen bg-[#09090b] text-zinc-100 overflow-hidden relative selection:bg-indigo-600/50">
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
 
-      {/* Left Sidebar */}
       <aside className={`fixed top-8 left-8 bottom-8 w-[420px] flex flex-col glass rounded-[48px] border border-white/10 shadow-2xl z-40 transition-all duration-500 ease-in-out transform ${leftVisible ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
         <div className="p-8 border-b border-white/5 flex items-center justify-center gap-4">
           <button onClick={() => setLeftPanelMode('studio')} className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${leftPanelMode === 'studio' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-white/5 text-zinc-500 hover:text-white'}`}><Icon name="grid" size={16} /> Studio</button>
@@ -284,6 +311,7 @@ const App: React.FC = () => {
               onInsert={insertFromLibrary} 
               onCreateCustom={handleCreateCustomComponent}
               onDeleteCustom={handleDeleteCustomComponent}
+              onDeleteElement={deleteElement}
               isGenerating={agentStatus !== 'idle'}
             />
           ) : (
@@ -348,7 +376,6 @@ const App: React.FC = () => {
         <button onClick={() => setLeftVisible(true)} className="fixed top-1/2 left-8 -translate-y-1/2 w-14 h-14 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-indigo-600 hover:scale-110 transition-all"><Icon name="chevron-right" /></button>
       )}
 
-      {/* Main Canvas Area */}
       <main className="flex-1 flex flex-col bg-[#0c0c0e] relative">
         <Header 
           platform={platform} 
@@ -360,8 +387,8 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-hidden flex items-center justify-center p-20 bg-dot-pattern relative">
           <div 
             ref={containerRef} 
-            style={{ ...pageStyle as any }} 
-            className={`transition-all duration-1000 shadow-[0_150px_400px_rgba(0,0,0,1)] relative overflow-hidden ${platform === Platform.MOBILE ? 'w-[375px] h-[750px] rounded-[72px] border-[20px] border-[#0c0c0e]' : 'w-full max-w-6xl aspect-video rounded-[64px] border border-white/5'}`} 
+            style={finalCanvasStyle as any} 
+            className={`transition-all duration-1000 shadow-[0_150px_400px_rgba(0,0,0,1)] relative overflow-hidden ${platform === Platform.MOBILE ? 'w-[375px] h-[750px] rounded-[72px] border-[20px] border-[#0c0c0e]' : 'rounded-[64px] border border-white/5'}`} 
             onMouseDown={(e) => e.target === e.currentTarget && setSelectedId(null)}
           >
             <UIRenderer elements={elements} selectedId={selectedId} onSelect={setSelectedId} onDragStart={handleDragStart} />
@@ -369,7 +396,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Right Sidebar: Visionary Agent */}
       <AgentPanel 
         visible={agentVisible} 
         onClose={() => setAgentVisible(false)} 

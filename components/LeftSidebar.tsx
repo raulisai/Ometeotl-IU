@@ -14,11 +14,12 @@ interface LeftSidebarProps {
   onInsert: (type: string, name: string, template?: UIElement) => void;
   onCreateCustom: (prompt: string) => void;
   onDeleteCustom: (name: string) => void;
+  onDeleteElement: (id: string) => void;
   isGenerating: boolean;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
-  elements, selectedId, setSelectedId, libraryComponents, customComponents, onInsert, onCreateCustom, onDeleteCustom, isGenerating
+  elements, selectedId, setSelectedId, libraryComponents, customComponents, onInsert, onCreateCustom, onDeleteCustom, onDeleteElement, isGenerating
 }) => {
   const [customPrompt, setCustomPrompt] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -49,9 +50,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <div 
                 key={el.id} 
                 onClick={() => setSelectedId(el.id)} 
-                className={`flex items-center gap-4 px-6 py-4 rounded-3xl cursor-pointer text-xs font-black transition-all duration-300 ${selectedId === el.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/30' : 'hover:bg-white/5 text-zinc-500'}`}
+                className={`group flex items-center justify-between gap-4 px-6 py-4 rounded-3xl cursor-pointer text-xs font-black transition-all duration-300 ${selectedId === el.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/30' : 'hover:bg-white/5 text-zinc-500'}`}
               >
-                <Icon name={el.type === 'img' ? 'image' : 'layers'} size={16} /> {el.name}
+                <div className="flex items-center gap-4">
+                  <Icon name={el.type === 'img' ? 'image' : 'layers'} size={16} /> {el.name}
+                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDeleteElement(el.id); }}
+                  className={`p-1 rounded-full transition-all ${selectedId === el.id ? 'text-white/40 hover:text-white' : 'text-zinc-700 hover:text-red-500 opacity-0 group-hover:opacity-100'}`}
+                >
+                  <Icon name="trash" size={14} />
+                </button>
               </div>
             ))}
           </div>

@@ -9,12 +9,12 @@ export interface UIStyle {
   backgroundColor?: string;
   backgroundGradient?: string;
   backgroundImage?: string;
+  backgroundSize?: string;
+  backgroundRepeat?: string;
+  backgroundPosition?: string;
+  backgroundAttachment?: string;
   color?: string;
   borderRadius?: string;
-  borderTopLeftRadius?: string;
-  borderTopRightRadius?: string;
-  borderBottomLeftRadius?: string;
-  borderBottomRightRadius?: string;
   padding?: string;
   margin?: string;
   

@@ -11,7 +11,6 @@ interface UIRendererProps {
 
 export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, onSelect, onDragStart }) => {
   const renderElement = (el: UIElement) => {
-    // Determine the HTML tag to use
     const Tag = (el.type === 'section' || el.type === 'div' || el.type === 'card' || el.type === 'custom') ? 'div' : el.type as any;
     const ValidTag = ['div', 'section', 'nav', 'header', 'footer', 'button', 'a', 'h1', 'h2', 'h3', 'p', 'span', 'img', 'input', 'form', 'label'].includes(Tag) ? Tag : 'div';
 
@@ -20,7 +19,11 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
     const isInput = ValidTag === 'input';
     const isVoid = ['img', 'input', 'br', 'hr'].includes(ValidTag);
 
-    // Build standard CSS properties from the style object
+    // Prioritize background gradient for Designer Gradients
+    const backgroundImageValue = (el.style?.backgroundGradient && el.style.backgroundGradient !== 'none') 
+      ? el.style.backgroundGradient 
+      : el.style?.backgroundImage;
+
     const combinedStyle: React.CSSProperties = {
       ...(el.style as any),
       position: 'absolute',
@@ -29,13 +32,16 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
       objectFit: isImage ? (el.style?.objectFit || 'cover') : undefined,
       cursor: isSelected ? 'move' : 'default',
       userSelect: 'none',
-      backgroundImage: el.style?.backgroundGradient || el.style?.backgroundImage,
+      backgroundImage: backgroundImageValue,
+      backgroundSize: el.style?.backgroundSize,
+      backgroundRepeat: el.style?.backgroundRepeat,
+      backgroundPosition: el.style?.backgroundPosition,
+      animation: el.style?.animation,
     };
 
     const commonProps = {
       key: el.id,
       style: combinedStyle,
-      // We apply tailwindClasses and a ring if selected
       className: `${el.tailwindClasses} transition-all duration-300 relative ${isSelected ? 'ring-2 ring-indigo-500 z-[100]' : 'hover:ring-1 hover:ring-indigo-300'}`,
       onMouseDown: (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -64,16 +70,11 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
             placeholder={el.content}
             readOnly
           />
-          {/* Overlay for drag handle on input since standard input prevents default drag behavior */}
-          <div 
-            className="absolute inset-0 z-10 cursor-move"
-            onMouseDown={commonProps.onMouseDown}
-          />
+          <div className="absolute inset-0 z-10 cursor-move" onMouseDown={commonProps.onMouseDown} />
         </div>
       );
     }
 
-    // Check if content is HTML code (e.g. <table>, <ul>, etc.)
     const isHtmlContent = el.content && typeof el.content === 'string' && (el.content.trim().startsWith('<') || el.content.trim().includes('</') || el.content.trim().includes('<table'));
 
     return (
@@ -84,13 +85,9 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
           </div>
         )}
         
-        {/* Render HTML content safely if it looks like code, otherwise render as text */}
         {!isVoid && el.content && el.content !== "null" && (
           isHtmlContent ? (
-            <div 
-              className="w-full h-full pointer-events-none overflow-auto" 
-              dangerouslySetInnerHTML={{ __html: el.content }} 
-            />
+            <div className="w-full h-full pointer-events-none overflow-auto" dangerouslySetInnerHTML={{ __html: el.content }} />
           ) : (
             el.content
           )
