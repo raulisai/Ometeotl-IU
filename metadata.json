@@ -1,0 +1,8 @@
+{
+  "name": "GenUI Studio",
+  "description": "An AI-powered interface design tool that transforms natural language prompts into professional UI/UX designs using Gemini. Design without barriers, export to React code, and switch platforms instantly.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

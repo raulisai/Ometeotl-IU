@@ -1,0 +1,87 @@
+
+export enum Platform {
+  WEB = 'web',
+  MOBILE = 'mobile'
+}
+
+export interface UIStyle {
+  // Layout
+  backgroundColor?: string;
+  backgroundGradient?: string;
+  // Added to fix TypeScript error in UIRenderer.tsx
+  backgroundImage?: string;
+  color?: string;
+  borderRadius?: string;
+  borderTopLeftRadius?: string;
+  borderTopRightRadius?: string;
+  borderBottomLeftRadius?: string;
+  borderBottomRightRadius?: string;
+  padding?: string;
+  margin?: string;
+  
+  // Typography
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+  lineHeight?: string;
+  letterSpacing?: string;
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  textDecoration?: string;
+  
+  // Borders
+  borderWidth?: string;
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none';
+  borderColor?: string;
+  
+  // Sizing
+  width?: string;
+  height?: string;
+  minWidth?: string;
+  minHeight?: string;
+  
+  // Effects
+  opacity?: number;
+  boxShadow?: string;
+  backdropFilter?: string;
+  filter?: string;
+  mixBlendMode?: string;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none';
+  
+  // Animations
+  animation?: string;
+  transition?: string;
+  transform?: string;
+}
+
+export interface UIElement {
+  id: string;
+  type: string;
+  name: string;
+  tailwindClasses: string;
+  content: string;
+  children?: UIElement[];
+  style?: UIStyle;
+  position?: { x: number; y: number };
+  isLocked?: boolean;
+}
+
+export interface CanvasState {
+  elements: UIElement[];
+  platform: Platform;
+  projectName: string;
+  selectedElementId?: string | null;
+  pageStyle?: UIStyle;
+}
+
+export interface HistoryItem {
+  state: CanvasState;
+  timestamp: number;
+}
+
+export interface LibraryComponent {
+  type: string;
+  name: string;
+  icon: any;
+  description: string;
+}
