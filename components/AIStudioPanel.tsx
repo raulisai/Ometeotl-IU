@@ -1,9 +1,11 @@
 
 import React from 'react';
 import { Icon } from './Icon';
+import { UIElement } from '../types';
 
 interface AIStudioPanelProps {
   isImageSelected: boolean;
+  selectedElement?: UIElement;
   selectedId: string | null;
   isGenerating: boolean;
   refinementPrompt: string;
@@ -18,7 +20,7 @@ interface AIStudioPanelProps {
 }
 
 export const AIStudioPanel: React.FC<AIStudioPanelProps> = ({
-  isImageSelected, selectedId, isGenerating, refinementPrompt, setRefinementPrompt, 
+  isImageSelected, selectedElement, selectedId, isGenerating, refinementPrompt, setRefinementPrompt, 
   aiImagePrompt, setAiImagePrompt, prompt, setPrompt, handleRefineImage, handleCreateAIImage, handleGenerate
 }) => {
   return (
@@ -26,8 +28,8 @@ export const AIStudioPanel: React.FC<AIStudioPanelProps> = ({
       {isImageSelected ? (
         <section className="space-y-10">
           <div className="flex items-center gap-3 px-2">
-            <Icon name="sparkles" size={20} className="text-indigo-400" />
-            <label className="text-[12px] text-indigo-400 font-black uppercase tracking-[0.3em]">AI Asset Manipulator</label>
+            <Icon name="image" size={20} className="text-indigo-400" />
+            <label className="text-[12px] text-indigo-400 font-black uppercase tracking-[0.3em]">Image Manipulator</label>
           </div>
 
           <button 
@@ -39,10 +41,10 @@ export const AIStudioPanel: React.FC<AIStudioPanelProps> = ({
           </button>
 
           <div className="space-y-5">
-            <span className="text-[11px] text-zinc-500 font-black uppercase tracking-widest px-2">Image Transformation</span>
+            <span className="text-[11px] text-zinc-500 font-black uppercase tracking-widest px-2">Refine Specific Image</span>
             <div className="relative group">
               <textarea 
-                placeholder="Describe changes... (e.g. 'Turn into a 3D glass icon')" 
+                placeholder="Describe changes for this image... (e.g. 'Turn into a 3D glass icon')" 
                 className="w-full bg-black/60 border border-white/10 rounded-[36px] p-8 text-xs focus:border-indigo-600 outline-none h-48 resize-none font-medium transition-all shadow-inner" 
                 value={refinementPrompt} 
                 onChange={e => setRefinementPrompt(e.target.value)} 
@@ -61,11 +63,14 @@ export const AIStudioPanel: React.FC<AIStudioPanelProps> = ({
         <section className="space-y-8">
           <div className="flex items-center gap-3 px-2">
             <Icon name="sparkles" size={20} className="text-indigo-400" />
-            <label className="text-[12px] text-indigo-400 font-black uppercase tracking-[0.3em]">Design Evolution Lab</label>
+            <div className="flex flex-col">
+               <label className="text-[12px] text-indigo-400 font-black uppercase tracking-[0.3em]">Component Refiner</label>
+               <span className="text-[9px] text-zinc-600 font-bold uppercase mt-1 italic">Modifying: {selectedElement?.name || 'Selected Item'}</span>
+            </div>
           </div>
           <div className="relative group">
             <textarea 
-              placeholder="Instruct the AI to transform this specific element or layout..." 
+              placeholder={`Instruct how to evolve the ${selectedElement?.name || 'component'}...`} 
               className="w-full bg-black/60 border border-white/10 rounded-[48px] p-10 text-xs focus:border-indigo-600 outline-none h-64 resize-none shadow-inner transition-all font-medium"
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
@@ -78,9 +83,13 @@ export const AIStudioPanel: React.FC<AIStudioPanelProps> = ({
               <Icon name="play" size={28} />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => handleGenerate("Apply high-end minimal aesthetic", selectedId!)} className="p-6 bg-white/[0.03] border border-white/5 rounded-[32px] text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600/20 transition-all">Ultra-Minimal</button>
-            <button onClick={() => handleGenerate("Transform into a frosted glass style", selectedId!)} className="p-6 bg-white/[0.03] border border-white/5 rounded-[32px] text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600/20 transition-all">Glass-FX</button>
+          
+          <div className="space-y-4">
+            <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest px-2">Quick Styles (Targeted)</span>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => handleGenerate("Make it ultra-modern and minimalist", selectedId!)} className="p-6 bg-white/[0.03] border border-white/5 rounded-[32px] text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600/20 transition-all">Minimal</button>
+              <button onClick={() => handleGenerate("Apply a sophisticated glassmorphism effect", selectedId!)} className="p-6 bg-white/[0.03] border border-white/5 rounded-[32px] text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600/20 transition-all">Glass</button>
+            </div>
           </div>
         </section>
       )}

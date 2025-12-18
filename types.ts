@@ -8,7 +8,6 @@ export interface UIStyle {
   // Layout
   backgroundColor?: string;
   backgroundGradient?: string;
-  // Added to fix TypeScript error in UIRenderer.tsx
   backgroundImage?: string;
   color?: string;
   borderRadius?: string;
@@ -84,4 +83,16 @@ export interface LibraryComponent {
   name: string;
   icon: any;
   description: string;
+  isCustom?: boolean;
+  template?: UIElement;
 }
+
+export interface AIAction {
+  id: string;
+  type: 'user' | 'ai';
+  message: string;
+  timestamp: number;
+  targetElementName?: string;
+}
+
+export type TaskStatus = 'idle' | 'analyzing' | 'designing' | 'applying' | 'error';

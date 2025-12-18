@@ -14,25 +14,26 @@ interface PropertiesPanelProps {
   onFileUpload: () => void;
 }
 
+// Move these outside to prevent focus loss during re-renders
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <section className="space-y-4 pb-6 border-b border-white/5 last:border-0">
+    <label className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em] block px-1">{title}</label>
+    <div className="space-y-4">{children}</div>
+  </section>
+);
+
+const ControlGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="flex items-center justify-between gap-4">
+    <span className="text-[10px] text-zinc-500 font-medium whitespace-nowrap">{label}</span>
+    <div className="flex-1 flex justify-end gap-2">{children}</div>
+  </div>
+);
+
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   selectedId, selectedElement, isEnvSelected, isImageSelected, pageStyle, updateStyle, updateContent, onFileUpload
 }) => {
   const currentStyle = isEnvSelected ? pageStyle : selectedElement?.style || {};
   
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <section className="space-y-4 pb-6 border-b border-white/5 last:border-0">
-      <label className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em] block px-1">{title}</label>
-      <div className="space-y-4">{children}</div>
-    </section>
-  );
-
-  const ControlGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-[10px] text-zinc-500 font-medium whitespace-nowrap">{label}</span>
-      <div className="flex-1 flex justify-end gap-2">{children}</div>
-    </div>
-  );
-
   return (
     <div className="space-y-8 animate-in fade-in duration-300 pb-20">
       
@@ -116,12 +117,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
       {/* --- TYPOGRAPHY SECTION --- */}
       {!isImageSelected && !isEnvSelected && (
-        <Section title="Typography">
+        <Section title="Typography & Content">
           <div className="space-y-4">
              <textarea 
-              value={selectedElement?.content} 
+              value={selectedElement?.content || ''} 
               onChange={e => updateContent(selectedId!, e.target.value)} 
-              className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-xs focus:border-indigo-500 outline-none h-24 font-medium transition-all shadow-inner" 
+              className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-xs focus:border-indigo-500 outline-none h-40 font-mono transition-all shadow-inner leading-relaxed" 
+              placeholder="Text or HTML content..."
             />
             
             <div className="grid grid-cols-2 gap-4">
@@ -262,7 +264,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </button>
             ))}
           </div>
-          <p className="text-[9px] text-zinc-600 leading-relaxed italic px-1">Tip: Animations bring UI to life. Try "Spin" for loaders or "Float" for 3D icons.</p>
         </Section>
       )}
 

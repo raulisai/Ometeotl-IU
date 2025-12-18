@@ -11,7 +11,8 @@ interface UIRendererProps {
 
 export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, onSelect, onDragStart }) => {
   const renderElement = (el: UIElement) => {
-    const Tag = (el.type === 'section' || el.type === 'div' || el.type === 'card') ? 'div' : el.type as any;
+    // Determine the HTML tag to use
+    const Tag = (el.type === 'section' || el.type === 'div' || el.type === 'card' || el.type === 'custom') ? 'div' : el.type as any;
     const ValidTag = ['div', 'section', 'nav', 'header', 'footer', 'button', 'a', 'h1', 'h2', 'h3', 'p', 'span', 'img', 'input', 'form', 'label'].includes(Tag) ? Tag : 'div';
 
     const isSelected = selectedId === el.id;
@@ -19,13 +20,14 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
     const isInput = ValidTag === 'input';
     const isVoid = ['img', 'input', 'br', 'hr'].includes(ValidTag);
 
+    // Build standard CSS properties from the style object
     const combinedStyle: React.CSSProperties = {
       ...(el.style as any),
       position: 'absolute',
       left: el.position?.x ?? 0,
       top: el.position?.y ?? 0,
       objectFit: isImage ? (el.style?.objectFit || 'cover') : undefined,
-      cursor: 'move',
+      cursor: isSelected ? 'move' : 'default',
       userSelect: 'none',
       backgroundImage: el.style?.backgroundGradient || el.style?.backgroundImage,
     };
@@ -33,6 +35,7 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
     const commonProps = {
       key: el.id,
       style: combinedStyle,
+      // We apply tailwindClasses and a ring if selected
       className: `${el.tailwindClasses} transition-all duration-300 relative ${isSelected ? 'ring-2 ring-indigo-500 z-[100]' : 'hover:ring-1 hover:ring-indigo-300'}`,
       onMouseDown: (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -61,6 +64,7 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
             placeholder={el.content}
             readOnly
           />
+          {/* Overlay for drag handle on input since standard input prevents default drag behavior */}
           <div 
             className="absolute inset-0 z-10 cursor-move"
             onMouseDown={commonProps.onMouseDown}
@@ -69,6 +73,9 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
       );
     }
 
+    // Check if content is HTML code (e.g. <table>, <ul>, etc.)
+    const isHtmlContent = el.content && typeof el.content === 'string' && (el.content.trim().startsWith('<') || el.content.trim().includes('</') || el.content.trim().includes('<table'));
+
     return (
       <ValidTag {...commonProps}>
         {isSelected && (
@@ -76,7 +83,19 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
             {el.name}
           </div>
         )}
-        {!isVoid && el.content && el.content !== "null" && el.content}
+        
+        {/* Render HTML content safely if it looks like code, otherwise render as text */}
+        {!isVoid && el.content && el.content !== "null" && (
+          isHtmlContent ? (
+            <div 
+              className="w-full h-full pointer-events-none overflow-auto" 
+              dangerouslySetInnerHTML={{ __html: el.content }} 
+            />
+          ) : (
+            el.content
+          )
+        )}
+        
         {!isVoid && el.children && el.children.map(child => renderElement(child))}
       </ValidTag>
     );
