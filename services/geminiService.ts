@@ -48,7 +48,7 @@ const ELEMENT_SCHEMA = {
       }
     }
   },
-  required: ['id', 'type', 'name', 'tailwindClasses', 'content']
+  required: ['type', 'name', 'tailwindClasses', 'content']
 };
 
 const UI_SCHEMA = {
@@ -74,7 +74,7 @@ export const generateFullUI = async (prompt: string, platform: Platform, current
   
   const systemInstruction = `You are a World-Class UI/UX Designer. 
   - Return the COMPLETE list of elements and pageStyle.
-  - For complex structures (tables, lists), you can include the full Tailwind HTML code inside the 'content' field.
+  - For complex structures (tables, lists), include the full Tailwind HTML code inside the 'content' field.
   - Prioritize responsiveness and high-end visual aesthetics.`;
 
   const response = await ai.models.generateContent({
@@ -86,9 +86,6 @@ export const generateFullUI = async (prompt: string, platform: Platform, current
   return JSON.parse(response.text || '{"elements":[], "pageStyle": {}}');
 };
 
-/**
- * Refines ONLY the specific element provided, without looking at or returning the full state.
- */
 export const refineSpecificElement = async (element: UIElement, prompt: string): Promise<UIElement> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-3-pro-preview";
@@ -97,7 +94,6 @@ export const refineSpecificElement = async (element: UIElement, prompt: string):
   - Your task is to MODIFY the provided component based on the user prompt. 
   - DO NOT change the ID. 
   - Focus on updating its tailwindClasses, style properties, and content.
-  - If the prompt asks for a change in content (like more table rows or text), generate the appropriate HTML/text inside the 'content' field.
   - Return ONLY the updated UIElement object.`;
 
   const response = await ai.models.generateContent({
@@ -113,19 +109,22 @@ export const generateComponentTemplate = async (prompt: string): Promise<UIEleme
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-3-pro-preview";
   
-  const systemInstruction = `You are a Component Architect. 
-  - Create a single highly polished, self-contained UI component.
-  - Use Tailwind CSS classes for ALL styling within the HTML content.
-  - Ensure the design follows modern, clean standards.
-  - Return exactly ONE UIElement object.`;
+  const systemInstruction = `You are a Master UI Architect.
+  - Create ONE highly complex and functional-looking UI component.
+  - The 'content' field MUST contain rich HTML structure with Tailwind CSS (e.g., nested divs, spans, icons placeholder, multiple buttons).
+  - Use high-end design patterns: glassmorphism, soft shadows, gradients, and hover effects.
+  - Ensure the component is visually striking and fills a reasonable space.
+  - Return exactly ONE UIElement object with its name, type, tailwindClasses, and full HTML content.`;
 
   const response = await ai.models.generateContent({
     model,
-    contents: `Create a reusable component for: ${prompt}`,
+    contents: `Design a professional component for: ${prompt}`,
     config: { systemInstruction, responseMimeType: "application/json", responseSchema: ELEMENT_SCHEMA }
   });
 
-  return JSON.parse(response.text || '{}');
+  const element = JSON.parse(response.text || '{}');
+  // Ensure we have a default ID for the template storage
+  return { ...element, id: `tpl-${Date.now()}` };
 };
 
 export const generateImageWithAI = async (prompt: string): Promise<string> => {

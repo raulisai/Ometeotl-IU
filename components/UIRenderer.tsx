@@ -11,7 +11,7 @@ interface UIRendererProps {
 
 export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, onSelect, onDragStart }) => {
   const renderElement = (el: UIElement) => {
-    const Tag = (el.type === 'section' || el.type === 'div' || el.type === 'card' || el.type === 'custom') ? 'div' : el.type as any;
+    const Tag = (el.type === 'section' || el.type === 'div' || el.type === 'card' || el.type === 'custom' || el.type === 'mascot') ? 'div' : el.type as any;
     const ValidTag = ['div', 'section', 'nav', 'header', 'footer', 'button', 'a', 'h1', 'h2', 'h3', 'p', 'span', 'img', 'input', 'form', 'label'].includes(Tag) ? Tag : 'div';
 
     const isSelected = selectedId === el.id;
@@ -19,7 +19,7 @@ export const UIRenderer: React.FC<UIRendererProps> = ({ elements, selectedId, on
     const isInput = ValidTag === 'input';
     const isVoid = ['img', 'input', 'br', 'hr'].includes(ValidTag);
 
-    // Prioritize background gradient for Designer Gradients
+    // Prioritize background gradient
     const backgroundImageValue = (el.style?.backgroundGradient && el.style.backgroundGradient !== 'none') 
       ? el.style.backgroundGradient 
       : el.style?.backgroundImage;

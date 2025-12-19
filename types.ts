@@ -25,12 +25,12 @@ export interface UIStyle {
   lineHeight?: string;
   letterSpacing?: string;
   textAlign?: 'left' | 'center' | 'right' | 'justify';
-  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize' | string;
   textDecoration?: string;
   
   // Borders
   borderWidth?: string;
-  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none';
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none' | string;
   borderColor?: string;
   
   // Sizing
@@ -45,7 +45,7 @@ export interface UIStyle {
   backdropFilter?: string;
   filter?: string;
   mixBlendMode?: string;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'none';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down' | string;
   
   // Animations
   animation?: string;
@@ -63,6 +63,7 @@ export interface UIElement {
   style?: UIStyle;
   position?: { x: number; y: number };
   isLocked?: boolean;
+  state?: 'idle' | 'thinking' | 'adapting';
 }
 
 export interface CanvasState {
@@ -82,7 +83,7 @@ export interface LibraryComponent {
   type: string;
   name: string;
   icon: any;
-  description: string;
+  description?: string;
   isCustom?: boolean;
   template?: UIElement;
 }
